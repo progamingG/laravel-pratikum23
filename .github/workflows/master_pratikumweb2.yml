@@ -1,4 +1,7 @@
-name: Build and deploy PHP app with frontend to Azure Web App - pratikumWeb2
+# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
+# More GitHub Actions for Azure: https://github.com/Azure/actions
+
+name: Build and deploy PHP app to Azure Web App - pratikumWeb2
 
 on:
   push:
@@ -10,7 +13,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: read #This is required for actions/checkout
 
     steps:
       - uses: actions/checkout@v4
@@ -19,14 +22,13 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.2'
-
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          php-version: '18'
 
-      - name: Install frontend dependencies and build
-        run: |
+      - name: Install npm dependencies and build frontend
+        run:
           npm install
           npm run build
 
@@ -38,22 +40,12 @@ jobs:
 
       - name: Run composer install if composer.json exists
         if: steps.check_files.outputs.files_exists == 'true'
-        run: composer install --prefer-dist --no-progress
-
-      - name: Prepare deployment folder
-        run: |
-          mkdir deploy
-          cp -r build/* deploy/         # hasil frontend (ubah ke dist/* jika Vue)
-          cp -r public/* deploy/        # file PHP (ubah sesuai struktur Anda)
-          cp composer.* deploy/         # opsional, jika dibutuhkan
-          echo "Deployment files prepared."
+        run: composer validate --no-check-publish && composer install --prefer-dist --no-progress
 
       - name: Zip artifact for deployment
-        run: |
-          cd deploy
-          zip -r ../release.zip .
+        run: zip -r release.zip . -x "node_modules/*" ".git/*"
 
-      - name: Upload artifact
+      - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: php-app
@@ -66,18 +58,18 @@ jobs:
       name: 'Production'
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
     permissions:
-      id-token: write
-      contents: read
+      id-token: write #This is required for requesting the JWT
+      contents: read #This is required for actions/checkout
 
     steps:
-      - name: Download artifact
+      - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
           name: php-app
 
-      - name: Unzip artifact
+      - name: Unzip artifact for deployment
         run: unzip release.zip
-
+      
       - name: Login to Azure
         uses: azure/login@v2
         with:
@@ -85,7 +77,7 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_E0663354913947A3B3A0D1A30F011259 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_C01BCAE6EA0943B48FA1575C018A3410 }}
 
-      - name: Deploy to Azure Web App
+      - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
         id: deploy-to-webapp
         with:
