@@ -44,10 +44,7 @@ jobs:
 
       - name: Zip artifact for deployment
         run: |
-          mkdir deploy-folder
-          shopt -s dotglob
-          cp -r ./* deploy-folder/
-          zip -r release.zip deploy-folder -x "deploy-folder/node_modules/*" "deploy-folder/.git/*"
+          zip -r release.zip . -x "node_modules/*" ".git/*" "*.zip"
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
