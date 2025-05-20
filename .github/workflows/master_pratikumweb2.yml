@@ -43,7 +43,7 @@ jobs:
         run: composer validate --no-check-publish && composer install --prefer-dist --no-progress
 
       - name: Zip artifact for deployment
-          run: |
+        run: |
             mkdir deploy-folder
             cp -r * deploy-folder
             zip -r release.zip deploy-folder -x "deploy-folder/node_modules/*" "deploy-folder/.git/*"
